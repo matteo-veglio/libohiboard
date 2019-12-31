@@ -41,6 +41,24 @@ extern "C" {
 #include "interrupt.h"
 #include "utility.h"
 
+static inline void PWR_EnableBootC2(void)
+{
+    UTILITY_SET_REGISTER_BIT(PWR->CR4, PWR_CR4_C2BOOT);
+}
+
+static inline void AHB3_GRP1_EnableClock(uint32_t Periphs)
+{
+  uint32_t tmpreg;
+  UTILITY_SET_REGISTER_BIT(RCC->AHB3ENR, Periphs);
+  /* Delay after an RCC peripheral clock enabling */
+  tmpreg = UTILITY_READ_REGISTER_BIT(RCC->AHB3ENR, Periphs);
+  (void)tmpreg;
+}
+
+
+
+
+
 static inline void IPCC_ITF_ENABLE(IPCC_TypeDef *ipcc, IPCC_IT_Enable IT_On)
 {
     switch (IT_On)
@@ -164,8 +182,183 @@ static inline uint32_t IPCC_IS_ACTIVE_FLAG_CHx(IPCC_TypeDef const *const ipcc, u
     }
 }
 
+static void IPCC_THREAD_NotEvtHandler( void )
+{
+    IPCC_CH_STATE_DISABLE( IPCC, IPCC_THREAD_NOTIFICATION_ACK_CHANNEL, IPCC_DISABLE_RX_CH_C1 );
+
+    IPCC_THREAD_EvtNot();
+
+    return;
+}
+
+static void IPCC_BLE_EvtHandler( void )
+{
+    IPCC_BLE_RxEvtNot();
+
+    IPCC_CLEAR_FLAG_CHx( IPCC, IPCC_BLE_EVENT_CHANNEL, IPCC_CLEAR_C1 );
+
+    return;
+}
+
+static void IPCC_SYS_EvtHandler( void )
+{
+    IPCC_SYS_EvtNot();
+
+    IPCC_CLEAR_FLAG_CHx( IPCC, IPCC_SYSTEM_EVENT_CHANNEL, IPCC_CLEAR_C1 );
+
+    return;
+}
+
+static void IPCC_TRACES_EvtHandler( void )
+{
+    IPCC_TRACES_EvtNot();
+
+    IPCC_CLEAR_FLAG_CHx( IPCC, IPCC_TRACES_CHANNEL, IPCC_CLEAR_C1 );
+
+    return;
+}
+
+static void IPCC_THREAD_CliNotEvtHandler( void )
+{
+    IPCC_CH_STATE_DISABLE( IPCC, IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL, IPCC_DISABLE_RX_CH_C1 );
+
+  IPCC_THREAD_CliEvtNot();
+
+  return;
+}
+
+/*void IPCC_THREAD_CliEvtNot( void )
+{
+  TL_THREAD_CliNotReceived( (TL_EvtPacket_t*)(TL_RefTable.p_thread_table->clicmdrsp_buffer) );
+
+  return;
+}
+__weak void TL_THREAD_CliNotReceived( TL_EvtPacket_t * Notbuffer ){}; */
+
+static void IPCC_OT_CmdEvtHandler( void )
+{
+    IPCC_CH_STATE_DISABLE( IPCC, IPCC_THREAD_OT_CMD_RSP_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+
+    IPCC_OT_CmdEvtNot();
+
+    return;
+}
+
+static void IPCC_SYS_CmdEvtHandler( void )
+{
+    IPCC_CH_STATE_DISABLE( IPCC, IPCC_SYSTEM_CMD_RSP_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+
+    IPCC_SYS_CmdEvtNot();
+
+    return;
+}
+
+static void (*FreeBufCb)( void );
+
+static void IPCC_MM_FreeBufHandler( void )
+{
+    IPCC_CH_STATE_DISABLE( IPCC, IPCC_MM_RELEASE_BUFFER_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+
+    FreeBufCb();
+
+    IPCC_SET_FLAG_CHx( IPCC, IPCC_MM_RELEASE_BUFFER_CHANNEL, IPCC_SET_C1 );
+
+    return;
+}
+
+static void IPCC_BLE_AclDataEvtHandler( void )
+{
+    IPCC_CH_STATE_DISABLE( IPCC, IPCC_HCI_ACL_DATA_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+
+  IPCC_BLE_AclDataAckNot();
+
+  return;
+}
 
 
+
+
+
+void IPCC_Enable( void )
+{
+    PWR_EnableBootC2();
+
+    return;
+}
+
+void IPCC_Init( void )
+{
+    AHB3_GRP1_EnableClock( RCC_AHB3ENR_IPCCEN );
+
+    IPCC_ITF_ENABLE( IPCC, IPCC_ITF_ENABLE_RX_C1 );
+    IPCC_ITF_ENABLE( IPCC, IPCC_ITF_ENABLE_TX_C1 );
+
+    Interrupt_enable(INTERRUPT_IPCC_C1_RX);
+    Interrupt_enable(INTERRUPT_IPCC_C1_TX);
+
+    return;
+}
+
+
+
+/**
+ * Interrupt Handler
+ */
+void IPCC_Rx_Handler( void )
+{
+    if (IPCC_RX_PENDING( IPCC_THREAD_NOTIFICATION_ACK_CHANNEL ))
+    {
+        IPCC_THREAD_NotEvtHandler();
+    }
+    else if (IPCC_RX_PENDING( IPCC_BLE_EVENT_CHANNEL ))
+    {
+        IPCC_BLE_EvtHandler();
+    }
+    else if (IPCC_RX_PENDING( IPCC_SYSTEM_EVENT_CHANNEL ))
+    {
+        IPCC_SYS_EvtHandler();
+    }
+    else if (IPCC_RX_PENDING( IPCC_TRACES_CHANNEL ))
+    {
+        IPCC_TRACES_EvtHandler();
+    }
+  else if (IPCC_RX_PENDING( IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL ))
+  {
+    IPCC_THREAD_CliNotEvtHandler();
+  }
+
+    return;
+}
+
+void IPCC_Tx_Handler( void )
+{
+    if (IPCC_TX_PENDING( IPCC_THREAD_OT_CMD_RSP_CHANNEL ))
+    {
+        IPCC_OT_CmdEvtHandler();
+    }
+    else if (IPCC_TX_PENDING( IPCC_SYSTEM_CMD_RSP_CHANNEL ))
+    {
+        IPCC_SYS_CmdEvtHandler();
+    }
+    else if (IPCC_TX_PENDING( IPCC_MM_RELEASE_BUFFER_CHANNEL ))
+    {
+        IPCC_MM_FreeBufHandler();
+    }
+    else if (IPCC_TX_PENDING( IPCC_HCI_ACL_DATA_CHANNEL ))
+    {
+        IPCC_BLE_AclDataEvtHandler();
+    }
+    return;
+}
+
+__weak void IPCC_THREAD_EvtNot( void ){};
+__weak void IPCC_BLE_RxEvtNot( void ){};
+__weak void IPCC_SYS_EvtNot( void ){};
+__weak void IPCC_TRACES_EvtNot( void ){};
+
+__weak void IPCC_OT_CmdEvtNot( void ){};
+__weak void IPCC_SYS_CmdEvtNot( void ){};
+__weak void IPCC_BLE_AclDataAckNot( void ){};
 
 #ifdef __cplusplus
 }

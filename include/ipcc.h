@@ -68,6 +68,36 @@ extern "C" {
 #define IPCC_CHANNEL_5 (0x00000010U) /*!< IPCC Channel 5 */
 #define IPCC_CHANNEL_6 (0x00000020U) /*!< IPCC Channel 6 */
 
+/** CPU1 */
+#define IPCC_BLE_CMD_CHANNEL                         IPCC_CHANNEL_1
+#define IPCC_SYSTEM_CMD_RSP_CHANNEL                  IPCC_CHANNEL_2
+#define IPCC_THREAD_OT_CMD_RSP_CHANNEL               IPCC_CHANNEL_3
+#define IPCC_MAC_802_15_4_CMD_RSP_CHANNEL            IPCC_CHANNEL_3
+#define IPCC_THREAD_CLI_CMD_CHANNEL                  IPCC_CHANNEL_5
+#define IPCC_MM_RELEASE_BUFFER_CHANNEL               IPCC_CHANNEL_4
+#define IPCC_HCI_ACL_DATA_CHANNEL                    IPCC_CHANNEL_6
+
+/** CPU2 */
+#define IPCC_BLE_EVENT_CHANNEL                       IPCC_CHANNEL_1
+#define IPCC_SYSTEM_EVENT_CHANNEL                    IPCC_CHANNEL_2
+#define IPCC_THREAD_NOTIFICATION_ACK_CHANNEL         IPCC_CHANNEL_3
+#define IPCC_MAC_802_15_4_NOTIFICATION_ACK_CHANNEL   IPCC_CHANNEL_3
+#define IPCC_TRACES_CHANNEL                          IPCC_CHANNEL_4
+#define IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL     IPCC_CHANNEL_5
+
+#define IPCC_TX_PENDING( channel ) ( !(IPCC_IS_ACTIVE_FLAG_CHx( IPCC, channel, IPCC_IS_ACTIVE_C1 )) ) &&  (((~(IPCC->C1MR)) & (channel << 16U)))
+#define IPCC_RX_PENDING( channel )  (IPCC_IS_ACTIVE_FLAG_CHx( IPCC, channel, IPCC_IS_ACTIVE_C2 )) && (((~(IPCC->C1MR)) & (channel << 0U)))
+
+
+void IPCC_THREAD_EvtNot( void );
+void IPCC_BLE_RxEvtNot( void );
+void IPCC_SYS_EvtNot( void );
+void IPCC_TRACES_EvtNot( void );
+void IPCC_OT_CmdEvtNot( void );
+void IPCC_SYS_CmdEvtNot( void );
+void IPCC_BLE_AclDataAckNot( void );
+
+
 /**
  * IPCC Interrupt Flags
  */

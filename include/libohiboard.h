@@ -235,6 +235,10 @@ extern "C" {
 #ifdef LIBOHIBOARD_WATCHDOG
 #include "watchdog.h"
 #endif
+
+#ifdef LIBOHIBOARD_IPCC
+#include "ipcc.h"
+#endif
 #ifndef __XC16
     // stub of ClrWdt invoked from framework
     // WARNING : conflict with microchip builtin methods

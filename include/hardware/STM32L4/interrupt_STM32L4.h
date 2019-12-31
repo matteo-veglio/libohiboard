@@ -99,6 +99,11 @@ typedef enum  _Interrupt_Vector
     INTERRUPT_TIM7             = 55,
 #endif
 
+#if defined (LIBOHIBOARD_STM32WB)
+	INTERRUPT_IPCC_C1_RX       = 44,
+	INTERRUPT_IPCC_C1_TX       = 45,
+#endif
+
     INTERRUPT_DMA2_CH1         = 56,
     INTERRUPT_DMA2_CH2         = 57,
     INTERRUPT_DMA2_CH3         = 58,
@@ -113,6 +118,18 @@ typedef enum  _Interrupt_Vector
     // TODO: Add all interrupts
 
 } Interrupt_Vector;
+
+#if defined (LIBOHIBOARD_STM32WB)
+
+typedef enum  _Interrupt_Vector2
+{
+    INTERRUPT_IPCC_C2_RX_TX    = 19,
+
+    // TODO: Add all interrupts
+
+} Interrupt_Vector2;
+
+#endif
 
 /**
  * List of all possible value for interrupt priority.

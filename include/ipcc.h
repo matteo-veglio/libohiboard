@@ -85,8 +85,8 @@ extern "C" {
 #define IPCC_TRACES_CHANNEL                          IPCC_CHANNEL_4
 #define IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL     IPCC_CHANNEL_5
 
-#define IPCC_TX_PENDING( channel ) ( !(IPCC_IS_ACTIVE_FLAG_CHx( IPCC, channel, IPCC_IS_ACTIVE_C1 )) ) &&  (((~(IPCC->C1MR)) & (channel << 16U)))
-#define IPCC_RX_PENDING( channel )  (IPCC_IS_ACTIVE_FLAG_CHx( IPCC, channel, IPCC_IS_ACTIVE_C2 )) && (((~(IPCC->C1MR)) & (channel << 0U)))
+#define Ipcc_Tx_Pending( channel ) ( !(Ipcc_Is_active_ChannelFlag( OB_IPCC, channel, IPCC_IS_ACTIVE_CHANNELFLAG_CPU1 )) ) &&  (((~(OB_IPCC->regmapCpu1->MR)) & (channel << 16U)))
+#define Ipcc_Rx_Pending( channel )  (Ipcc_Is_active_ChannelFlag( OB_IPCC, channel, IPCC_IS_ACTIVE_CHANNELFLAG_CPU2 )) && (((~(OB_IPCC->regmapCpu1->MR)) & (channel << 0U)))
 
 
 void IPCC_THREAD_EvtNot( void );
@@ -97,87 +97,8 @@ void IPCC_OT_CmdEvtNot( void );
 void IPCC_SYS_CmdEvtNot( void );
 void IPCC_BLE_AclDataAckNot( void );
 
+typedef struct _Ipcc_Device* Ipcc_DeviceHandle;
 
-/**
- * IPCC Interrupt Flags
- */
-typedef enum _IPCC_IT_Enable
-{
-    IPCC_ITF_ENABLE_TX_C1,
-    IPCC_ITF_ENABLE_RX_C1,
-    IPCC_ITF_ENABLE_TX_C2,
-    IPCC_ITF_ENABLE_RX_C2,
-
-} IPCC_IT_Enable;
-
-typedef enum _IPCC_IT_Disable
-{
-    IPCC_ITF_DISABLE_TX_C1,
-    IPCC_ITF_DISABLE_RX_C1,
-    IPCC_ITF_DISABLE_TX_C2,
-    IPCC_ITF_DISABLE_RX_C2,
-
-} IPCC_IT_Disable;
-
-typedef enum _IPCC_IT_Is_Enable
-{
-    IPCC_ITF_IS_ENABLE_TX_C1,
-    IPCC_ITF_IS_ENABLE_RX_C1,
-    IPCC_ITF_IS_ENABLE_TX_C2,
-    IPCC_ITF_IS_ENABLE_RX_C2,
-
-} IPCC_IT_Is_Enable;
-
-/**
- * IPCC Channel State
- */
-typedef enum _CH_State_Enable
-{
-    IPCC_ENABLE_TX_CH_C1,
-    IPCC_ENABLE_RX_CH_C1,
-    IPCC_ENABLE_TX_CH_C2,
-    IPCC_ENABLE_RX_CH_C2,
-
-} CH_State_Enable;
-
-typedef enum _CH_State_Disable
-{
-    IPCC_DISABLE_TX_CH_C1,
-    IPCC_DISABLE_RX_CH_C1,
-    IPCC_DISABLE_TX_CH_C2,
-    IPCC_DISABLE_RX_CH_C2,
-
-} CH_State_Disable;
-
-typedef enum _CH_State_Is_Enable
-{
-    IPCC_IS_ENABLE_TX_CH_C1,
-    IPCC_IS_ENABLE_RX_CH_C1,
-    IPCC_IS_ENABLE_TX_CH_C2,
-    IPCC_IS_ENABLE_RX_CH_C2,
-
-} CH_State_Is_Enable;
-
-typedef enum _IPCC_ClearFlag_CHx
-{
-    IPCC_CLEAR_C1,
-    IPCC_CLEAR_C2,
-
-} IPCC_ClearFlag_CHx;
-
-typedef enum _IPCC_SetFlag_CHx
-{
-    IPCC_SET_C1,
-    IPCC_SET_C2,
-
-} IPCC_SetFlag_CHx;
-
-typedef enum _IPCC_Is_ActiveFlag_CHx
-{
-    IPCC_IS_ACTIVE_C1,
-    IPCC_IS_ACTIVE_C2,
-
-} IPCC_Is_ActiveFlag_CHx;
 
 #ifdef __cplusplus
 }

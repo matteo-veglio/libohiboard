@@ -41,150 +41,266 @@ extern "C" {
 #include "interrupt.h"
 #include "utility.h"
 
+#define IPCC_CLOCK_ENABLE(REG,MASK)      do { \
+                                            UTILITY_SET_REGISTER_BIT(REG,MASK); \
+                                            asm("nop"); \
+                                            (void) UTILITY_READ_REGISTER_BIT(REG,MASK); \
+                                          } while (0)
+/*
+static inline void AHB3_GRP1_EnableClock(uint32_t Periphs)
+{
+  uint32_t tmpreg;
+  UTILITY_SET_REGISTER_BIT(RCC->AHB3ENR, Periphs);
+  /* Delay after an RCC peripheral clock enabling
+  tmpreg = UTILITY_READ_REGISTER_BIT(RCC->AHB3ENR, Periphs);
+  (void)tmpreg;
+}*/
+
+typedef struct _Ipcc_Device
+{
+    IPCC_TypeDef* regmap;
+    IPCC_CommonTypeDef* regmapCpu1;
+    IPCC_CommonTypeDef* regmapCpu2;
+
+    volatile uint32_t* rccRegisterPtr;      /**< Register for clock enabling. */
+    uint32_t rccRegisterEnable;        /**< Register mask for current device. */
+} Ippc_Device;
+
+static Ippc_Device ipcc1 =
+{
+    .regmap     = IPCC,
+    .regmapCpu1 = IPCC_C1,
+    .regmapCpu2 = IPCC_C2,
+
+    .rccRegisterPtr      = &RCC->AHB3ENR,
+    .rccRegisterEnable   = RCC_AHB3ENR_IPCCEN,
+};
+Ipcc_DeviceHandle OB_IPCC = &ipcc1;
+
+/**
+ * IPCC Interrupt State
+ */
+typedef enum _Ipcc_InterruptEnable
+{
+    IPCC_INTERRUPTENABLE_CPU1_TX,
+    IPCC_INTERRUPTENABLE_CPU1_RX,
+    IPCC_INTERRUPTENABLE_CPU2_TX,
+    IPCC_INTERRUPTENABLE_CPU2_RX,
+
+} Ipcc_InterruptEnable;
+
+typedef enum _Ipcc_InterruptDisable
+{
+    IPCC_INTERRUPTDISABLE_CPU1_TX,
+    IPCC_INTERRUPTDISABLE_CPU1_RX,
+    IPCC_INTERRUPTDISABLE_CPU2_TX,
+    IPCC_INTERRUPTDISABLE_CPU2_RX,
+
+} Ipcc_InterruptDisable;
+
+typedef enum _Ipcc_Interrupt_Is_Enable
+{
+    IPCC_INTERRUPT_IS_ENABLE_CPU1_TX,
+    IPCC_INTERRUPT_IS_ENABLE_CPU1_RX,
+    IPCC_INTERRUPT_IS_ENABLE_CPU2_TX,
+    IPCC_INTERRUPT_IS_ENABLE_CPU2_RX,
+
+} Ipcc_Interrupt_Is_Enable;
+
+/**
+ * IPCC Channel State
+ */
+typedef enum _Ipcc_ChannelEnable
+{
+    IPCC_CHANNELENABLE_CPU1_TX,
+    IPCC_CHANNELENABLE_CPU1_RX,
+    IPCC_CHANNELENABLE_CPU2_TX,
+    IPCC_CHANNELENABLE_CPU2_RX,
+
+} Ipcc_ChannelEnable;
+
+typedef enum _Ipcc_ChannelDisable
+{
+    IPCC_CHANNELDISABLE_CPU1_TX,
+    IPCC_CHANNELDISABLE_CPU1_RX,
+    IPCC_CHANNELDISABLE_CPU2_TX,
+    IPCC_CHANNELDISABLE_CPU2_RX,
+
+} Ipcc_ChannelDisable;
+
+typedef enum _Ipcc_Channel_Is_Enable
+{
+    IPCC_CHANNEL_IS_ENABLE_CPU1_TX,
+    IPCC_CHANNEL_IS_ENABLE_CPU1_RX,
+    IPCC_CHANNEL_IS_ENABLE_CPU2_TX,
+    IPCC_CHANNEL_IS_ENABLE_CPU2_RX,
+
+} Ipcc_Channel_Is_Enable;
+
+/**
+ * IPCC Interrupt Flags
+ */
+typedef enum _Ipcc_Clear_ChannelFlag
+{
+    IPCC_CLEAR_CHANNELFLAG_CPU1,
+    IPCC_CLEAR_CHANNELFLAG_CPU2,
+
+} Ipcc_Clear_ChannelFlag;
+
+typedef enum _Ipcc_Set_ChannelFlag
+{
+    IPCC_SET_CHANNELFLAG_CPU1,
+    IPCC_SET_CHANNELFLAG_CPU2,
+
+} Ipcc_Set_ChannelFlag;
+
+typedef enum _Ipcc_Is_Active_ChannelFlag
+{
+    IPCC_IS_ACTIVE_CHANNELFLAG_CPU1,
+    IPCC_IS_ACTIVE_CHANNELFLAG_CPU2,
+
+} Ipcc_Is_Active_ChannelFlag;
+
+
+
+
 static inline void PWR_EnableBootC2(void)
 {
     UTILITY_SET_REGISTER_BIT(PWR->CR4, PWR_CR4_C2BOOT);
 }
 
-static inline void AHB3_GRP1_EnableClock(uint32_t Periphs)
+
+
+
+
+
+
+static inline void Ipcc_enableInterrupt(Ipcc_DeviceHandle dev, Ipcc_InterruptEnable interrupt)
 {
-  uint32_t tmpreg;
-  UTILITY_SET_REGISTER_BIT(RCC->AHB3ENR, Periphs);
-  /* Delay after an RCC peripheral clock enabling */
-  tmpreg = UTILITY_READ_REGISTER_BIT(RCC->AHB3ENR, Periphs);
-  (void)tmpreg;
-}
-
-
-
-
-
-static inline void IPCC_ITF_ENABLE(IPCC_TypeDef *ipcc, IPCC_IT_Enable IT_On)
-{
-    switch (IT_On)
+    switch (interrupt)
     {
-    case IPCC_ITF_ENABLE_TX_C1:
-        UTILITY_SET_REGISTER_BIT(ipcc->C1CR, IPCC_C1CR_TXFIE);
-    case IPCC_ITF_ENABLE_RX_C1:
-        UTILITY_SET_REGISTER_BIT(ipcc->C1CR, IPCC_C1CR_RXOIE);
-    case IPCC_ITF_ENABLE_TX_C2:
-        UTILITY_SET_REGISTER_BIT(ipcc->C2CR, IPCC_C2CR_TXFIE);
-    case IPCC_ITF_ENABLE_RX_C2:
-        UTILITY_SET_REGISTER_BIT(ipcc->C2CR, IPCC_C2CR_RXOIE);
+    case IPCC_INTERRUPTENABLE_CPU1_TX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_TXFIE);
+    case IPCC_INTERRUPTENABLE_CPU1_RX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_RXOIE);
+    case IPCC_INTERRUPTENABLE_CPU2_TX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_TXFIE);
+    case IPCC_INTERRUPTENABLE_CPU2_RX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_RXOIE);
     }
 }
 
-static inline void IPCC_ITF_DISABLE(IPCC_TypeDef *ipcc, IPCC_IT_Disable IT_Off)
+static inline void Ipcc_disableInterrupt(Ipcc_DeviceHandle dev, Ipcc_InterruptDisable interrupt)
 {
-    switch (IT_Off)
+    switch (interrupt)
     {
-    case IPCC_ITF_DISABLE_TX_C1:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C1CR, IPCC_C1CR_TXFIE);
-    case IPCC_ITF_DISABLE_RX_C1:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C1CR, IPCC_C1CR_RXOIE);
-    case IPCC_ITF_DISABLE_TX_C2:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C2CR, IPCC_C2CR_TXFIE);
-    case IPCC_ITF_DISABLE_RX_C2:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C2CR, IPCC_C2CR_RXOIE);
+    case IPCC_INTERRUPTDISABLE_CPU1_TX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_TXFIE);
+    case IPCC_INTERRUPTDISABLE_CPU1_RX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_RXOIE);
+    case IPCC_INTERRUPTDISABLE_CPU2_TX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_TXFIE);
+    case IPCC_INTERRUPTDISABLE_CPU2_RX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_RXOIE);
     }
 }
 
-static inline uint32_t IPCC_ITF_STATE(IPCC_TypeDef const *const ipcc, IPCC_IT_Is_Enable IT_Is_On)
+static inline uint32_t Ipcc_Is_enableInterrupt(Ipcc_DeviceHandle dev, Ipcc_Interrupt_Is_Enable interrupt)
 {
-    switch (IT_Is_On)
+    switch (interrupt)
     {
-    case IPCC_ITF_IS_ENABLE_TX_C1:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C1CR, IPCC_C1CR_TXFIE) == (IPCC_C1CR_TXFIE)) ? 1UL : 0UL);
-    case IPCC_ITF_IS_ENABLE_RX_C1:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C1CR, IPCC_C1CR_RXOIE) == (IPCC_C1CR_RXOIE)) ? 1UL : 0UL);
-    case IPCC_ITF_IS_ENABLE_TX_C2:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C2CR, IPCC_C2CR_TXFIE) == (IPCC_C2CR_TXFIE)) ? 1UL : 0UL);
-    case IPCC_ITF_IS_ENABLE_RX_C2:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C2CR, IPCC_C2CR_RXOIE) == (IPCC_C2CR_RXOIE)) ? 1UL : 0UL);
+    case IPCC_INTERRUPT_IS_ENABLE_CPU1_TX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_TXFIE) == (IPCC_C1CR_TXFIE)) ? 1UL : 0UL);
+    case IPCC_INTERRUPT_IS_ENABLE_CPU1_RX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_RXOIE) == (IPCC_C1CR_RXOIE)) ? 1UL : 0UL);
+    case IPCC_INTERRUPT_IS_ENABLE_CPU2_TX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_TXFIE) == (IPCC_C2CR_TXFIE)) ? 1UL : 0UL);
+    case IPCC_INTERRUPT_IS_ENABLE_CPU2_RX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_RXOIE) == (IPCC_C2CR_RXOIE)) ? 1UL : 0UL);
     }
 }
 
-static inline void IPCC_CH_STATE_ENABLE(IPCC_TypeDef *ipcc, uint32_t Channel, CH_State_Enable State_On)
+static inline void Ipcc_enableChannel(Ipcc_DeviceHandle dev, uint32_t Channel, Ipcc_ChannelEnable state)
 {
-    switch (State_On)
+    switch (state)
     {
-    case IPCC_ENABLE_TX_CH_C1:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C1MR, Channel << IPCC_C1MR_CH1FM_Pos);
-    case IPCC_ENABLE_RX_CH_C1:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C1MR, Channel);
-    case IPCC_ENABLE_TX_CH_C2:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C2MR, Channel << IPCC_C2MR_CH1FM_Pos);
-    case IPCC_ENABLE_RX_CH_C2:
-        UTILITY_CLEAR_REGISTER_BIT(ipcc->C2MR, Channel);
+    case IPCC_CHANNELENABLE_CPU1_TX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu1->MR, Channel << IPCC_C1MR_CH1FM_Pos);
+    case IPCC_CHANNELENABLE_CPU1_RX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu1->MR, Channel);
+    case IPCC_CHANNELENABLE_CPU2_TX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu2->MR, Channel << IPCC_C2MR_CH1FM_Pos);
+    case IPCC_CHANNELENABLE_CPU2_RX:
+        UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu2->MR, Channel);
     }
 }
 
-static inline void IPCC_CH_STATE_DISABLE(IPCC_TypeDef *ipcc, uint32_t Channel, CH_State_Disable State_Off)
+static inline void Ipcc_disableChannel(Ipcc_DeviceHandle dev, uint32_t Channel, Ipcc_ChannelDisable state)
 {
-    switch (State_Off)
+    switch (state)
     {
-    case IPCC_DISABLE_TX_CH_C1:
-        UTILITY_SET_REGISTER_BIT(ipcc->C1MR, Channel << IPCC_C1MR_CH1FM_Pos);
-    case IPCC_DISABLE_RX_CH_C1:
-        UTILITY_SET_REGISTER_BIT(ipcc->C1MR, Channel);
-    case IPCC_DISABLE_TX_CH_C2:
-        UTILITY_SET_REGISTER_BIT(ipcc->C2MR, Channel << (IPCC_C2MR_CH1FM_Pos));
-    case IPCC_DISABLE_RX_CH_C2:
-        UTILITY_SET_REGISTER_BIT(ipcc->C2MR, Channel);
+    case IPCC_CHANNELDISABLE_CPU1_TX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu1->MR, Channel << IPCC_C1MR_CH1FM_Pos);
+    case IPCC_CHANNELDISABLE_CPU1_RX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu1->MR, Channel);
+    case IPCC_CHANNELDISABLE_CPU2_TX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu2->MR, Channel << (IPCC_C2MR_CH1FM_Pos));
+    case IPCC_CHANNELDISABLE_CPU2_RX:
+        UTILITY_SET_REGISTER_BIT(dev->regmapCpu2->MR, Channel);
     }
 }
 
-static inline uint32_t IPCC_CH_STATE_IS_ENABLE(IPCC_TypeDef const *const ipcc, uint32_t Channel, CH_State_Is_Enable State_Is_On)
+static inline uint32_t Ipcc_Is_enableChannel(Ipcc_DeviceHandle dev, uint32_t Channel, Ipcc_Channel_Is_Enable state)
 {
-    switch (State_Is_On)
+    switch (state)
     {
-    case IPCC_IS_ENABLE_TX_CH_C1:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C1MR, Channel << IPCC_C1MR_CH1FM_Pos) != (Channel << IPCC_C1MR_CH1FM_Pos)) ? 1UL : 0UL);
-    case IPCC_IS_ENABLE_RX_CH_C1:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C1MR, Channel) != (Channel)) ? 1UL : 0UL);
-    case IPCC_IS_ENABLE_TX_CH_C2:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C2MR, Channel << IPCC_C2MR_CH1FM_Pos) != (Channel << IPCC_C2MR_CH1FM_Pos)) ? 1UL : 0UL);
-    case IPCC_IS_ENABLE_RX_CH_C2:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C2MR, Channel) != (Channel)) ? 1UL : 0UL);
+    case IPCC_CHANNEL_IS_ENABLE_CPU1_TX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->MR, Channel << IPCC_C1MR_CH1FM_Pos) != (Channel << IPCC_C1MR_CH1FM_Pos)) ? 1UL : 0UL);
+    case IPCC_CHANNEL_IS_ENABLE_CPU1_RX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->MR, Channel) != (Channel)) ? 1UL : 0UL);
+    case IPCC_CHANNEL_IS_ENABLE_CPU2_TX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->MR, Channel << IPCC_C2MR_CH1FM_Pos) != (Channel << IPCC_C2MR_CH1FM_Pos)) ? 1UL : 0UL);
+    case IPCC_CHANNEL_IS_ENABLE_CPU2_RX:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->MR, Channel) != (Channel)) ? 1UL : 0UL);
     }
 }
 
-static inline void IPCC_CLEAR_FLAG_CHx(IPCC_TypeDef *ipcc, uint32_t Channel, IPCC_ClearFlag_CHx Clear_F)
+static inline void Ipcc_clear_ChannelFlag(Ipcc_DeviceHandle dev, uint32_t Channel, Ipcc_Clear_ChannelFlag flag)
 {
-    switch (Clear_F)
+    switch (flag)
     {
-    case IPCC_CLEAR_C1:
-        UTILITY_WRITE_REGISTER(ipcc->C1SCR, Channel);
-    case IPCC_CLEAR_C2:
-        UTILITY_WRITE_REGISTER(ipcc->C2SCR, Channel);
+    case IPCC_CLEAR_CHANNELFLAG_CPU1:
+        UTILITY_WRITE_REGISTER(dev->regmapCpu1->SCR, Channel);
+    case IPCC_CLEAR_CHANNELFLAG_CPU2:
+        UTILITY_WRITE_REGISTER(dev->regmapCpu2->SCR, Channel);
     }
 }
 
-static inline void IPCC_SET_FLAG_CHx(IPCC_TypeDef *ipcc, uint32_t Channel, IPCC_SetFlag_CHx Set_F)
+static inline void Ipcc_set_ChannelFlag(Ipcc_DeviceHandle dev, uint32_t Channel, Ipcc_Set_ChannelFlag flag)
 {
-    switch (Set_F)
+    switch (flag)
     {
-    case IPCC_SET_C1:
-        UTILITY_WRITE_REGISTER(ipcc->C1SCR, Channel << IPCC_C1SCR_CH1S_Pos);
-    case IPCC_SET_C2:
-        UTILITY_WRITE_REGISTER(ipcc->C2SCR, Channel << IPCC_C2SCR_CH1S_Pos);
+    case IPCC_SET_CHANNELFLAG_CPU1:
+        UTILITY_WRITE_REGISTER(dev->regmapCpu1->SCR, Channel << IPCC_C1SCR_CH1S_Pos);
+    case IPCC_SET_CHANNELFLAG_CPU2:
+        UTILITY_WRITE_REGISTER(dev->regmapCpu2->SCR, Channel << IPCC_C2SCR_CH1S_Pos);
     }
 }
 
-static inline uint32_t IPCC_IS_ACTIVE_FLAG_CHx(IPCC_TypeDef const *const ipcc, uint32_t Channel, IPCC_Is_ActiveFlag_CHx Is_Active_F)
+static inline uint32_t Ipcc_Is_active_ChannelFlag(Ipcc_DeviceHandle dev, uint32_t Channel, Ipcc_Is_Active_ChannelFlag flag)
 {
-    switch (Is_Active_F)
+    switch (flag)
     {
-    case IPCC_IS_ACTIVE_C1:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C1TOC2SR, Channel) == (Channel)) ? 1UL : 0UL);
-    case IPCC_IS_ACTIVE_C2:
-        return ((UTILITY_READ_REGISTER_BIT(ipcc->C2TOC1SR, Channel) == (Channel)) ? 1UL : 0UL);
+    case IPCC_IS_ACTIVE_CHANNELFLAG_CPU1:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->SR, Channel) == (Channel)) ? 1UL : 0UL);
+    case IPCC_IS_ACTIVE_CHANNELFLAG_CPU2:
+        return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->SR, Channel) == (Channel)) ? 1UL : 0UL);
     }
 }
 
 static void IPCC_THREAD_NotEvtHandler( void )
 {
-    IPCC_CH_STATE_DISABLE( IPCC, IPCC_THREAD_NOTIFICATION_ACK_CHANNEL, IPCC_DISABLE_RX_CH_C1 );
+    Ipcc_disableChannel( OB_IPCC, IPCC_THREAD_NOTIFICATION_ACK_CHANNEL, IPCC_CHANNELDISABLE_CPU1_RX );
 
     IPCC_THREAD_EvtNot();
 
@@ -195,7 +311,7 @@ static void IPCC_BLE_EvtHandler( void )
 {
     IPCC_BLE_RxEvtNot();
 
-    IPCC_CLEAR_FLAG_CHx( IPCC, IPCC_BLE_EVENT_CHANNEL, IPCC_CLEAR_C1 );
+    Ipcc_clear_ChannelFlag( OB_IPCC, IPCC_BLE_EVENT_CHANNEL, IPCC_CLEAR_CHANNELFLAG_CPU1 );
 
     return;
 }
@@ -204,7 +320,7 @@ static void IPCC_SYS_EvtHandler( void )
 {
     IPCC_SYS_EvtNot();
 
-    IPCC_CLEAR_FLAG_CHx( IPCC, IPCC_SYSTEM_EVENT_CHANNEL, IPCC_CLEAR_C1 );
+    Ipcc_clear_ChannelFlag( OB_IPCC, IPCC_SYSTEM_EVENT_CHANNEL, IPCC_CLEAR_CHANNELFLAG_CPU1 );
 
     return;
 }
@@ -213,14 +329,14 @@ static void IPCC_TRACES_EvtHandler( void )
 {
     IPCC_TRACES_EvtNot();
 
-    IPCC_CLEAR_FLAG_CHx( IPCC, IPCC_TRACES_CHANNEL, IPCC_CLEAR_C1 );
+    Ipcc_clear_ChannelFlag( OB_IPCC, IPCC_TRACES_CHANNEL, IPCC_CLEAR_CHANNELFLAG_CPU1 );
 
     return;
 }
 
 static void IPCC_THREAD_CliNotEvtHandler( void )
 {
-    IPCC_CH_STATE_DISABLE( IPCC, IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL, IPCC_DISABLE_RX_CH_C1 );
+    Ipcc_disableChannel( OB_IPCC, IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL, IPCC_CHANNELDISABLE_CPU1_RX );
 
   IPCC_THREAD_CliEvtNot();
 
@@ -237,7 +353,7 @@ __weak void TL_THREAD_CliNotReceived( TL_EvtPacket_t * Notbuffer ){}; */
 
 static void IPCC_OT_CmdEvtHandler( void )
 {
-    IPCC_CH_STATE_DISABLE( IPCC, IPCC_THREAD_OT_CMD_RSP_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+    Ipcc_disableChannel( OB_IPCC, IPCC_THREAD_OT_CMD_RSP_CHANNEL, IPCC_CHANNELDISABLE_CPU1_TX );
 
     IPCC_OT_CmdEvtNot();
 
@@ -246,7 +362,7 @@ static void IPCC_OT_CmdEvtHandler( void )
 
 static void IPCC_SYS_CmdEvtHandler( void )
 {
-    IPCC_CH_STATE_DISABLE( IPCC, IPCC_SYSTEM_CMD_RSP_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+    Ipcc_disableChannel( OB_IPCC, IPCC_SYSTEM_CMD_RSP_CHANNEL, IPCC_CHANNELDISABLE_CPU1_TX );
 
     IPCC_SYS_CmdEvtNot();
 
@@ -257,18 +373,18 @@ static void (*FreeBufCb)( void );
 
 static void IPCC_MM_FreeBufHandler( void )
 {
-    IPCC_CH_STATE_DISABLE( IPCC, IPCC_MM_RELEASE_BUFFER_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+    Ipcc_disableChannel( OB_IPCC, IPCC_MM_RELEASE_BUFFER_CHANNEL, IPCC_CHANNELDISABLE_CPU1_TX );
 
     FreeBufCb();
 
-    IPCC_SET_FLAG_CHx( IPCC, IPCC_MM_RELEASE_BUFFER_CHANNEL, IPCC_SET_C1 );
+    Ipcc_set_ChannelFlag( OB_IPCC, IPCC_MM_RELEASE_BUFFER_CHANNEL, IPCC_SET_CHANNELFLAG_CPU1 );
 
     return;
 }
 
 static void IPCC_BLE_AclDataEvtHandler( void )
 {
-    IPCC_CH_STATE_DISABLE( IPCC, IPCC_HCI_ACL_DATA_CHANNEL, IPCC_DISABLE_TX_CH_C1 );
+    Ipcc_disableChannel( OB_IPCC, IPCC_HCI_ACL_DATA_CHANNEL, IPCC_CHANNELDISABLE_CPU1_TX );
 
   IPCC_BLE_AclDataAckNot();
 
@@ -286,43 +402,41 @@ void IPCC_Enable( void )
     return;
 }
 
-void IPCC_Init( void )
+System_Errors Ippc_init (Ipcc_DeviceHandle dev)
 {
-    AHB3_GRP1_EnableClock( RCC_AHB3ENR_IPCCEN );
+  IPCC_CLOCK_ENABLE(*dev->rccRegisterPtr,dev->rccRegisterEnable);
 
-    IPCC_ITF_ENABLE( IPCC, IPCC_ITF_ENABLE_RX_C1 );
-    IPCC_ITF_ENABLE( IPCC, IPCC_ITF_ENABLE_TX_C1 );
+  Ipcc_enableInterrupt(dev,IPCC_INTERRUPTENABLE_CPU1_TX);
+  Ipcc_enableInterrupt(dev,IPCC_INTERRUPTENABLE_CPU1_RX );
 
-    Interrupt_enable(INTERRUPT_IPCC_C1_RX);
-    Interrupt_enable(INTERRUPT_IPCC_C1_TX);
+  Interrupt_enable(INTERRUPT_IPCC_C1_TX);
+  Interrupt_enable(INTERRUPT_IPCC_C1_RX);
 
-    return;
+  return;
 }
-
-
 
 /**
  * Interrupt Handler
  */
-void IPCC_Rx_Handler( void )
+void Ipcc_Rx_Handler( void )
 {
-    if (IPCC_RX_PENDING( IPCC_THREAD_NOTIFICATION_ACK_CHANNEL ))
+    if (Ipcc_Rx_Pending( IPCC_THREAD_NOTIFICATION_ACK_CHANNEL ))
     {
         IPCC_THREAD_NotEvtHandler();
     }
-    else if (IPCC_RX_PENDING( IPCC_BLE_EVENT_CHANNEL ))
+    else if (Ipcc_Rx_Pending( IPCC_BLE_EVENT_CHANNEL ))
     {
         IPCC_BLE_EvtHandler();
     }
-    else if (IPCC_RX_PENDING( IPCC_SYSTEM_EVENT_CHANNEL ))
+    else if (Ipcc_Rx_Pending( IPCC_SYSTEM_EVENT_CHANNEL ))
     {
         IPCC_SYS_EvtHandler();
     }
-    else if (IPCC_RX_PENDING( IPCC_TRACES_CHANNEL ))
+    else if (Ipcc_Rx_Pending( IPCC_TRACES_CHANNEL ))
     {
         IPCC_TRACES_EvtHandler();
     }
-  else if (IPCC_RX_PENDING( IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL ))
+  else if (Ipcc_Rx_Pending( IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL ))
   {
     IPCC_THREAD_CliNotEvtHandler();
   }
@@ -330,21 +444,21 @@ void IPCC_Rx_Handler( void )
     return;
 }
 
-void IPCC_Tx_Handler( void )
+void Ipcc_Tx_Handler( void )
 {
-    if (IPCC_TX_PENDING( IPCC_THREAD_OT_CMD_RSP_CHANNEL ))
+    if (Ipcc_Tx_Pending( IPCC_THREAD_OT_CMD_RSP_CHANNEL ))
     {
         IPCC_OT_CmdEvtHandler();
     }
-    else if (IPCC_TX_PENDING( IPCC_SYSTEM_CMD_RSP_CHANNEL ))
+    else if (Ipcc_Tx_Pending( IPCC_SYSTEM_CMD_RSP_CHANNEL ))
     {
         IPCC_SYS_CmdEvtHandler();
     }
-    else if (IPCC_TX_PENDING( IPCC_MM_RELEASE_BUFFER_CHANNEL ))
+    else if (Ipcc_Tx_Pending( IPCC_MM_RELEASE_BUFFER_CHANNEL ))
     {
         IPCC_MM_FreeBufHandler();
     }
-    else if (IPCC_TX_PENDING( IPCC_HCI_ACL_DATA_CHANNEL ))
+    else if (Ipcc_Tx_Pending( IPCC_HCI_ACL_DATA_CHANNEL ))
     {
         IPCC_BLE_AclDataEvtHandler();
     }

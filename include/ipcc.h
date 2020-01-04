@@ -5,6 +5,8 @@
  *
  * Authors:
  *  Marco Giammarini <m.giammarini@warcomeb.it>
+ *  Matteo Vegliò <veglio.matteo@libero.it>
+ *  Alessandro Zacchilli <a.zacchilli@outlook.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +30,8 @@
 /**
  * @file libohiboard/include/ipcc.h
  * @author Marco Giammarini <m.giammarini@warcomeb.it>
+ * @author Matteo Vegliò <veglio.matteo@libero.it>
+ * @author Alessandro Zacchilli <a.zacchilli@outlook.com>
  * @brief IPCC definitions and prototypes.
  */
 

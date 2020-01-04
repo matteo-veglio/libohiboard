@@ -3,6 +3,8 @@
  *
  * Authors:
  *  Marco Giammarini <m.giammarini@warcomeb.it>
+ *  Matteo Vegliò <veglio.matteo@libero.it>
+ *  Alessandro Zacchilli <a.zacchilli@outlook.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +28,8 @@
 /**
  * @file libohiboard/source/STM32WB/ipcc_STM32WB.c
  * @author Marco Giammarini <m.giammarini@warcomeb.it>
+ * @author Matteo Vegliò <veglio.matteo@libero.it>
+ * @author Alessandro Zacchilli <a.zacchilli@outlook.com>
  * @brief IPCC implementations for STM32WB Series
  */
 
@@ -61,6 +65,7 @@ typedef struct _Ipcc_Device
     IPCC_TypeDef* regmap;
     IPCC_CommonTypeDef* regmapCpu1;
     IPCC_CommonTypeDef* regmapCpu2;
+    PWR_TypeDef* regboot;
 
     volatile uint32_t* rccRegisterPtr;      /**< Register for clock enabling. */
     uint32_t rccRegisterEnable;        /**< Register mask for current device. */
@@ -71,6 +76,7 @@ static Ippc_Device ipcc1 =
     .regmap     = IPCC,
     .regmapCpu1 = IPCC_C1,
     .regmapCpu2 = IPCC_C2,
+    .regboot    = PWR,
 
     .rccRegisterPtr      = &RCC->AHB3ENR,
     .rccRegisterEnable   = RCC_AHB3ENR_IPCCEN,
@@ -160,15 +166,6 @@ typedef enum _Ipcc_Is_Active_ChannelFlag
     IPCC_IS_ACTIVE_CHANNELFLAG_CPU2,
 
 } Ipcc_Is_Active_ChannelFlag;
-
-
-
-
-static inline void PWR_EnableBootC2(void)
-{
-    UTILITY_SET_REGISTER_BIT(PWR->CR4, PWR_CR4_C2BOOT);
-}
-
 
 
 
@@ -338,7 +335,7 @@ static void IPCC_THREAD_CliNotEvtHandler( void )
 {
     Ipcc_disableChannel( OB_IPCC, IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL, IPCC_CHANNELDISABLE_CPU1_RX );
 
-  IPCC_THREAD_CliEvtNot();
+    IPCC_THREAD_CliEvtNot();
 
   return;
 }
@@ -386,33 +383,37 @@ static void IPCC_BLE_AclDataEvtHandler( void )
 {
     Ipcc_disableChannel( OB_IPCC, IPCC_HCI_ACL_DATA_CHANNEL, IPCC_CHANNELDISABLE_CPU1_TX );
 
-  IPCC_BLE_AclDataAckNot();
+    IPCC_BLE_AclDataAckNot();
 
   return;
 }
 
 
 
-
+static inline void Boot_CPU2(void)
+{
+    UTILITY_SET_REGISTER_BIT(OB_IPCC->regboot->CR4, PWR_CR4_C2BOOT);
+}
 
 void IPCC_Enable( void )
 {
-    PWR_EnableBootC2();
+    Boot_CPU2();
 
     return;
 }
 
 System_Errors Ippc_init (Ipcc_DeviceHandle dev)
 {
-  IPCC_CLOCK_ENABLE(*dev->rccRegisterPtr,dev->rccRegisterEnable);
+    System_Errors err = ERRORS_NO_ERROR;
+    IPCC_CLOCK_ENABLE(*dev->rccRegisterPtr,dev->rccRegisterEnable);
 
-  Ipcc_enableInterrupt(dev,IPCC_INTERRUPTENABLE_CPU1_TX);
-  Ipcc_enableInterrupt(dev,IPCC_INTERRUPTENABLE_CPU1_RX );
+    Ipcc_enableInterrupt(dev,IPCC_INTERRUPTENABLE_CPU1_TX);
+    Ipcc_enableInterrupt(dev,IPCC_INTERRUPTENABLE_CPU1_RX );
 
-  Interrupt_enable(INTERRUPT_IPCC_C1_TX);
-  Interrupt_enable(INTERRUPT_IPCC_C1_RX);
+    Interrupt_enable(INTERRUPT_IPCC_C1_TX);
+    Interrupt_enable(INTERRUPT_IPCC_C1_RX);
 
-  return;
+    return err;
 }
 
 /**

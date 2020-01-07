@@ -62,10 +62,10 @@ static inline void AHB3_GRP1_EnableClock(uint32_t Periphs)
 
 typedef struct _Ipcc_Device
 {
-    IPCC_TypeDef* regmap;
+    IPCC_TypeDef*       regmap;
     IPCC_CommonTypeDef* regmapCpu1;
     IPCC_CommonTypeDef* regmapCpu2;
-    PWR_TypeDef* regboot;
+    PWR_TypeDef*        regboot;
 
     volatile uint32_t* rccRegisterPtr;      /**< Register for clock enabling. */
     uint32_t rccRegisterEnable;        /**< Register mask for current device. */
@@ -86,15 +86,16 @@ Ipcc_DeviceHandle OB_IPCC = &ipcc1;
 /**
  * IPCC Interrupt State
  */
-typedef enum _Ipcc_InterruptEnable
+typedef enum _Ipcc_InterruptChannel
 {
-    IPCC_INTERRUPTENABLE_CPU1_TX,
-    IPCC_INTERRUPTENABLE_CPU1_RX,
-    IPCC_INTERRUPTENABLE_CPU2_TX,
-    IPCC_INTERRUPTENABLE_CPU2_RX,
+    IPCC_INTERRUPTCHANNEL_CPU1_TX,
+    IPCC_INTERRUPTCHANNEL_CPU1_RX,
+    IPCC_INTERRUPTCHANNEL_CPU2_TX,
+    IPCC_INTERRUPTCHANNEL_CPU2_RX,
 
-} Ipcc_InterruptEnable;
+} Ipcc_InterruptChannel;
 
+#if 0
 typedef enum _Ipcc_InterruptDisable
 {
     IPCC_INTERRUPTDISABLE_CPU1_TX,
@@ -142,6 +143,7 @@ typedef enum _Ipcc_Channel_Is_Enable
     IPCC_CHANNEL_IS_ENABLE_CPU2_RX,
 
 } Ipcc_Channel_Is_Enable;
+#endif
 
 /**
  * IPCC Interrupt Flags
@@ -168,51 +170,51 @@ typedef enum _Ipcc_Is_Active_ChannelFlag
 } Ipcc_Is_Active_ChannelFlag;
 
 
-
-
-
-
-static inline void Ipcc_enableInterrupt(Ipcc_DeviceHandle dev, Ipcc_InterruptEnable interrupt)
+static inline void Ipcc_enableInterrupt (Ipcc_DeviceHandle dev, Ipcc_InterruptChannel interrupt)
 {
     switch (interrupt)
     {
-    case IPCC_INTERRUPTENABLE_CPU1_TX:
+    case IPCC_INTERRUPTCHANNEL_CPU1_TX:
         UTILITY_SET_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_TXFIE);
-    case IPCC_INTERRUPTENABLE_CPU1_RX:
+        break;
+    case IPCC_INTERRUPTCHANNEL_CPU1_RX:
         UTILITY_SET_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_RXOIE);
-    case IPCC_INTERRUPTENABLE_CPU2_TX:
+        break;
+    case IPCC_INTERRUPTCHANNEL_CPU2_TX:
         UTILITY_SET_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_TXFIE);
-    case IPCC_INTERRUPTENABLE_CPU2_RX:
+        break;
+    case IPCC_INTERRUPTCHANNEL_CPU2_RX:
         UTILITY_SET_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_RXOIE);
+        break;
     }
 }
 
-static inline void Ipcc_disableInterrupt(Ipcc_DeviceHandle dev, Ipcc_InterruptDisable interrupt)
+static inline void Ipcc_disableInterrupt (Ipcc_DeviceHandle dev, Ipcc_InterruptChannel interrupt)
 {
     switch (interrupt)
     {
-    case IPCC_INTERRUPTDISABLE_CPU1_TX:
+    case IPCC_INTERRUPTCHANNEL_CPU1_TX:
         UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_TXFIE);
-    case IPCC_INTERRUPTDISABLE_CPU1_RX:
+    case IPCC_INTERRUPTCHANNEL_CPU1_RX:
         UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_RXOIE);
-    case IPCC_INTERRUPTDISABLE_CPU2_TX:
+    case IPCC_INTERRUPTCHANNEL_CPU2_TX:
         UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_TXFIE);
-    case IPCC_INTERRUPTDISABLE_CPU2_RX:
+    case IPCC_INTERRUPTCHANNEL_CPU2_RX:
         UTILITY_CLEAR_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_RXOIE);
     }
 }
 
-static inline uint32_t Ipcc_Is_enableInterrupt(Ipcc_DeviceHandle dev, Ipcc_Interrupt_Is_Enable interrupt)
+static inline uint32_t Ipcc_isInterruptEnable (Ipcc_DeviceHandle dev, Ipcc_InterruptChannel interrupt)
 {
     switch (interrupt)
     {
-    case IPCC_INTERRUPT_IS_ENABLE_CPU1_TX:
+    case IPCC_INTERRUPTCHANNEL_CPU1_TX:
         return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_TXFIE) == (IPCC_C1CR_TXFIE)) ? 1UL : 0UL);
-    case IPCC_INTERRUPT_IS_ENABLE_CPU1_RX:
+    case IPCC_INTERRUPTCHANNEL_CPU1_RX:
         return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu1->CR, IPCC_C1CR_RXOIE) == (IPCC_C1CR_RXOIE)) ? 1UL : 0UL);
-    case IPCC_INTERRUPT_IS_ENABLE_CPU2_TX:
+    case IPCC_INTERRUPTCHANNEL_CPU2_TX:
         return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_TXFIE) == (IPCC_C2CR_TXFIE)) ? 1UL : 0UL);
-    case IPCC_INTERRUPT_IS_ENABLE_CPU2_RX:
+    case IPCC_INTERRUPTCHANNEL_CPU2_RX:
         return ((UTILITY_READ_REGISTER_BIT(dev->regmapCpu2->CR, IPCC_C2CR_RXOIE) == (IPCC_C2CR_RXOIE)) ? 1UL : 0UL);
     }
 }

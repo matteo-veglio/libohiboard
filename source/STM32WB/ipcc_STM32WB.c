@@ -50,7 +50,7 @@ extern "C" {
                                          } while (0)
 
 #define IPCC_BOOT_CPU2()                 do { \
-                                            UTILITY_SET_REGISTER_BIT(OB_IPCC->regboot->CR4, PWR_CR4_C2BOOT); \
+                                            UTILITY_SET_REGISTER_BIT(OB_IPCC->regmapPWR->CR4, PWR_CR4_C2BOOT); \
                                          } while (0)
 
 
@@ -74,7 +74,7 @@ typedef struct _Ipcc_Device
     IPCC_TypeDef*       regmap;
     IPCC_CommonTypeDef* regmapCpu1;
     IPCC_CommonTypeDef* regmapCpu2;
-    PWR_TypeDef*        regboot;
+    PWR_TypeDef*        regmapPWR;
 
     volatile uint32_t* rccRegisterPtr;      /**< Register for clock enabling. */
     uint32_t rccRegisterEnable;        /**< Register mask for current device. */

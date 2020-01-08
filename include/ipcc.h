@@ -1,10 +1,9 @@
 /*
  * This file is part of the libohiboard project.
  *
- * Copyright (C) 2014-2019 A. C. Open Hardware Ideas Lab
+ * Copyright (C) 2020 A. C. Open Hardware Ideas Lab
  *
  * Authors:
- *  Marco Giammarini <m.giammarini@warcomeb.it>
  *  Matteo Vegliò <veglio.matteo@libero.it>
  *  Alessandro Zacchilli <a.zacchilli@outlook.com>
  *
@@ -29,7 +28,6 @@
 
 /**
  * @file libohiboard/include/ipcc.h
- * @author Marco Giammarini <m.giammarini@warcomeb.it>
  * @author Matteo Vegliò <veglio.matteo@libero.it>
  * @author Alessandro Zacchilli <a.zacchilli@outlook.com>
  * @brief IPCC definitions and prototypes.
@@ -48,6 +46,8 @@ extern "C" {
 
 /**
  * IPCC Flags status
+ * NOTA: These define is useful here?
+ * 
  */
 #define FLAG_IPCC_C1TOC2SR_CH1F IPCC_C1TOC2SR_CH1F_Msk /*!< C1 transmit to C2 receive Channel1 status flag before masking */
 #define FLAG_IPCC_C1TOC2SR_CH2F IPCC_C1TOC2SR_CH2F_Msk /*!< C1 transmit to C2 receive Channel2 status flag before masking */
@@ -65,12 +65,15 @@ extern "C" {
 /**
  * IPCC Channels definition
  */
-#define IPCC_CHANNEL_1 (0x00000001U) /*!< IPCC Channel 1 */
-#define IPCC_CHANNEL_2 (0x00000002U) /*!< IPCC Channel 2 */
-#define IPCC_CHANNEL_3 (0x00000004U) /*!< IPCC Channel 3 */
-#define IPCC_CHANNEL_4 (0x00000008U) /*!< IPCC Channel 4 */
-#define IPCC_CHANNEL_5 (0x00000010U) /*!< IPCC Channel 5 */
-#define IPCC_CHANNEL_6 (0x00000020U) /*!< IPCC Channel 6 */
+typedef enum _Ipcc_Channel
+{
+    IPCC_CHANNEL_1 = 0x00000001ul, /*!< IPCC Channel 1 */
+    IPCC_CHANNEL_2 = 0x00000002ul, /*!< IPCC Channel 2 */
+    IPCC_CHANNEL_3 = 0x00000004ul, /*!< IPCC Channel 3 */
+    IPCC_CHANNEL_4 = 0x00000008ul, /*!< IPCC Channel 4 */
+    IPCC_CHANNEL_5 = 0x00000010ul, /*!< IPCC Channel 5 */
+    IPCC_CHANNEL_6 = 0x00000020ul, /*!< IPCC Channel 6 */
+} Ipcc_Channel;
 
 /** CPU1 */
 #define IPCC_BLE_CMD_CHANNEL                         IPCC_CHANNEL_1
@@ -89,11 +92,20 @@ extern "C" {
 #define IPCC_TRACES_CHANNEL                          IPCC_CHANNEL_4
 #define IPCC_THREAD_CLI_NOTIFICATION_ACK_CHANNEL     IPCC_CHANNEL_5
 
-#define Ipcc_Tx_Pending( channel ) ( !(Ipcc_Is_active_ChannelFlag( OB_IPCC, channel, IPCC_IS_ACTIVE_CHANNELFLAG_CPU1 )) ) &&  (((~(OB_IPCC->regmapCpu1->MR)) & (channel << 16U)))
-#define Ipcc_Rx_Pending( channel )  (Ipcc_Is_active_ChannelFlag( OB_IPCC, channel, IPCC_IS_ACTIVE_CHANNELFLAG_CPU2 )) && (((~(OB_IPCC->regmapCpu1->MR)) & (channel << 0U)))
+typedef struct _Ipcc_Device* Ipcc_DeviceHandle;
 
+/**
+ * TODO 
+ */
+System_Errors Ippc_init (Ipcc_DeviceHandle dev);
 
-void IPCC_THREAD_EvtNot( void );
+/**
+ * TODO 
+ */
+void Ipcc_enable (Ipcc_DeviceHandle dev);
+
+void Ipcc_ThreadNotificationEvent (void);
+// Fix the other!
 void IPCC_BLE_RxEvtNot( void );
 void IPCC_SYS_EvtNot( void );
 void IPCC_TRACES_EvtNot( void );
@@ -101,7 +113,6 @@ void IPCC_OT_CmdEvtNot( void );
 void IPCC_SYS_CmdEvtNot( void );
 void IPCC_BLE_AclDataAckNot( void );
 
-typedef struct _Ipcc_Device* Ipcc_DeviceHandle;
 
 
 #ifdef __cplusplus

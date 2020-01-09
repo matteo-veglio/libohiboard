@@ -151,7 +151,7 @@ static inline uint32_t Ipcc_isInterruptEnable (Ipcc_DeviceHandle dev, Ipcc_Direc
     }
 }
 
-static inline void Ipcc_enableChannel (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_DirectionChannel dir)
+static inline void Ipcc_enableChannel (Ipcc_DeviceHandle dev, Ipcc_Channel channel, Ipcc_DirectionChannel dir)
 {
     switch (dir)
     {
@@ -170,7 +170,7 @@ static inline void Ipcc_enableChannel (Ipcc_DeviceHandle dev, uint32_t channel, 
     }
 }
 
-static inline void Ipcc_disableChannel (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_DirectionChannel dir)
+static inline void Ipcc_disableChannel (Ipcc_DeviceHandle dev, Ipcc_Channel channel, Ipcc_DirectionChannel dir)
 {
     switch (dir)
     {
@@ -189,7 +189,7 @@ static inline void Ipcc_disableChannel (Ipcc_DeviceHandle dev, uint32_t channel,
     }
 }
 
-static inline uint32_t Ipcc_isChannelEnable (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_DirectionChannel dir)
+static inline uint32_t Ipcc_isChannelEnable (Ipcc_DeviceHandle dev, Ipcc_Channel channel, Ipcc_DirectionChannel dir)
 {
     switch (dir)
     {
@@ -204,7 +204,7 @@ static inline uint32_t Ipcc_isChannelEnable (Ipcc_DeviceHandle dev, uint32_t cha
     }
 }
 
-static inline void Ipcc_clearFlag (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_CpuChannel cpu)
+static inline void Ipcc_clearFlag (Ipcc_DeviceHandle dev, Ipcc_Channel channel, Ipcc_CpuChannel cpu)
 {
     switch (cpu)
     {
@@ -217,7 +217,7 @@ static inline void Ipcc_clearFlag (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc
     }
 }
 
-static inline void Ipcc_setFlag (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_CpuChannel cpu)
+static inline void Ipcc_setFlag (Ipcc_DeviceHandle dev, Ipcc_Channel channel, Ipcc_CpuChannel cpu)
 {
     switch (cpu)
     {
@@ -230,7 +230,7 @@ static inline void Ipcc_setFlag (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_C
     }
 }
 
-static inline uint32_t Ipcc_isFlagActive (Ipcc_DeviceHandle dev, uint32_t channel, Ipcc_CpuChannel cpu)
+static inline uint32_t Ipcc_isFlagActive (Ipcc_DeviceHandle dev, Ipcc_Channel channel, Ipcc_CpuChannel cpu)
 {
     switch (cpu)
     {

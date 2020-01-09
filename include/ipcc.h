@@ -43,6 +43,7 @@ extern "C" {
 #endif
 
 #include "platforms.h"
+#include "errors.h"
 
 /**
  * IPCC Flags status
@@ -97,23 +98,41 @@ typedef struct _Ipcc_Device* Ipcc_DeviceHandle;
 /**
  * TODO 
  */
-System_Errors Ippc_init (Ipcc_DeviceHandle dev);
+void Ipcc_enable (Ipcc_DeviceHandle dev);
 
 /**
  * TODO 
  */
-void Ipcc_enable (Ipcc_DeviceHandle dev);
+System_Errors Ipcc_init (Ipcc_DeviceHandle dev);
 
-void Ipcc_ThreadNotificationEvent (void);
-// Fix the other!
-void IPCC_BLE_RxEvtNot( void );
-void IPCC_SYS_EvtNot( void );
-void IPCC_TRACES_EvtNot( void );
-void IPCC_OT_CmdEvtNot( void );
-void IPCC_SYS_CmdEvtNot( void );
-void IPCC_BLE_AclDataAckNot( void );
+void HW_IPCC_Rx_Handler( void );
+void HW_IPCC_Tx_Handler( void );
+
+void Ipcc_ble_init( void );
+void Ipcc_ble_sendCommand( void );
+void Ipcc_memory_sendFreeBuffer( void (*cb)( void ) );
+void Ipcc_bleRxNotificationEvent( void );
+void Ipcc_ble_sendAclData( void );
+void Ipcc_bleAclDataAckNotificationEvent( void );
 
 
+void Ipcc_system_init( void );
+void Ipcc_system_sendCommand( void );
+void Ipcc_sysCommandNotificationEvent( void );
+void Ipcc_sysNotificationEvent( void );
+
+void Ipcc_thread_init( void );
+void Ipcc_ot_sendCommand( void );
+void Ipcc_cli_sendCommand( void );
+void Ipcc_thread_sendAck( void );
+void Ipcc_otCommandNotificationEvent( void );
+void Ipcc_cli_commandNotificationEvent( void );
+void Ipcc_threadNotificationEvent (void);
+void Ipcc_thread_cliSendAck( void );
+void Ipcc_threadCliNotificationEvent( void );
+
+void Ipcc_traces_init( void );
+void Ipcc_tracesNotificationEvent( void );
 
 #ifdef __cplusplus
 }

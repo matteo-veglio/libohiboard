@@ -23,7 +23,7 @@
 
 #include "shci_tl.h"
 #include "shci.h"
-#include "stm32wbxx.h"
+#include "libohiboard.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private defines -----------------------------------------------------------*/

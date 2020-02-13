@@ -44,8 +44,8 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "opus.h"
-#include "opus_private.h"
+//#include "opus.h"
+//#include "opus_private.h"
 #include "ble_gatt_aci.h"
   
 /** 

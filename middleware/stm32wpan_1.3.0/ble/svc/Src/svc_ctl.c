@@ -21,6 +21,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "common_blesvc.h"
 
+// OHILAB - warcomeb did this!
+#include "libohiboard.h"
+
 /* Private typedef -----------------------------------------------------------*/
 typedef struct
 {

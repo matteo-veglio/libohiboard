@@ -1,8 +1,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "stm32wbxx.h"
-#include "stm32wbxx_hal_conf.h"
+// OHILAB - warcomeb did this!
+#include "libohiboard.h"
+//#include "stm32wbxx_hal_conf.h"
 #include "stm32_wpan_common.h"
 #include "flash_emulation.h"
 

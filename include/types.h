@@ -42,8 +42,12 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#if !defined(TRUE)
 #define TRUE               1
+#endif
+#if !defined(FALSE)
 #define FALSE              0
+#endif
 
 typedef void (*voidFuncPtr)(void);
 typedef void (*voidArgumentFuncPtr)(void *);

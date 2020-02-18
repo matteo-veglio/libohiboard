@@ -159,7 +159,7 @@ void HW_IPCC_Enable (void)
 
 void HW_IPCC_Init (void)
 {
-    Ipcc_init(OB_IPCC,HW_IPCC_Rx_Handler,HW_IPCC_Tx_Handler);
+    Ipcc_init(OB_IPCC,HW_IPCC_Tx_Handler,HW_IPCC_Rx_Handler);
 }
 
 /******************************************************************************

@@ -1744,6 +1744,23 @@ static uint32_t Clock_getActualSystemValue (void)
     return systemClock;
 }
 
+void Clock_setClockAfterWake (Clock_SystemSource source)
+{
+    ohiassert((source != CLOCK_SYSTEMSOURCE_MSI) && (source != CLOCK_SYSTEMSOURCE_HSI));
+
+    switch (source)
+    {
+    case CLOCK_SYSTEMSOURCE_MSI:
+        UTILITY_CLEAR_REGISTER_BIT(clk0.regmap->CFGR,RCC_CFGR_STOPWUCK);
+        break;
+    case CLOCK_SYSTEMSOURCE_HSI:
+        UTILITY_SET_REGISTER_BIT(clk0.regmap->CFGR,RCC_CFGR_STOPWUCK);
+        break;
+    default:
+        ohiassert(0);
+    }
+}
+
 #endif // LIBOHIBOARD_STM32L4
 
 #ifdef __cplusplus

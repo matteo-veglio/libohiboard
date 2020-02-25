@@ -37,7 +37,7 @@ extern "C" {
 
 #include "platforms.h"
 
-#if defined (LIBOHIBOARD_STM32L4)
+#if defined (LIBOHIBOARD_STM32L4) || defined (LIBOHIBOARD_STM32WB)
 
 /**
  * @addtogroup LIBOHIBOARD_Driver
@@ -115,8 +115,9 @@ static void LowPower_readResetStatus(void)
 	lpd.resetControl.flags.rccBOR                      = ((regRCC_CSR & RCC_CSR_BORRSTF) != 0)?(1):(0);
 	lpd.resetControl.flags.rccPinReset                 = ((regRCC_CSR & RCC_CSR_PINRSTF) != 0)?(1):(0);
 	lpd.resetControl.flags.rccOptionbyteLoaderReset    = ((regRCC_CSR & RCC_CSR_OBLRSTF) != 0)?(1):(0);
+#if defined (LIBOHIBOARD_STM32L4)
 	lpd.resetControl.flags.rccFirewallReset            = ((regRCC_CSR & RCC_CSR_FWRSTF) != 0)?(1):(0);
-
+#endif
 	// Clear Power flags
 	UTILITY_SET_REGISTER_BIT(lpd.regmapPWR->SCR, PWR_SCR_CSBF);
 	if (lpd.resetControl.flags.pwrWufi)
@@ -509,7 +510,7 @@ LowPower_Mode LowPower_getMode(void)
 	return lpd.currentMode;
 }
 
-#endif // LIBOHIBOARD_STM32L4
+#endif // LIBOHIBOARD_STM32L4 || LIBOHIBOARD_STM32WB
 
 /**
  * @}

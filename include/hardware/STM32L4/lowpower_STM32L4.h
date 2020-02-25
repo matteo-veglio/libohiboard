@@ -41,11 +41,30 @@ extern "C" {
 #include "platforms.h"
 
 /**
+*Define for Lowpower mode CPU1
+*/
+
+#if defined (LIBOHIBOARD_STM32WB)
+
+#define PWR_CR1_LPMS_STOP0              (0x00000000u)                         /*!< Stop 0: stop mode with main regulator */
+#define PWR_CR1_LPMS_STOP1              (PWR_CR1_LPMS_0)                      /*!< Stop 1: stop mode with low power regulator */
+#define PWR_CR1_LPMS_STOP2              (PWR_CR1_LPMS_1)                      /*!< Stop 2: stop mode with low power regulator and VDD12I interruptible digital core domain supply OFF (less peripherals activated than low power mode stop 1 to reduce power consumption)*/
+#define PWR_CR1_LPMS_STANDBY            (PWR_CR1_LPMS_0 | PWR_CR1_LPMS_1)     /*!< Standby mode */
+#define PWR_CR1_LPMS_SHUTDOWN           (PWR_CR1_LPMS_2)                      /*!< Shutdown mode */
+#define PWR_SR1_SBF                     (PWR_EXTSCR_C1SBF)                    /*!< System standby flag for CPU1 */
+#define PWR_SR1_SBF_CPU2                (PWR_EXTSCR_C2SBF)                    /*!< System standby flag for CPU2 */
+#define PWR_CR3_EIWF_Msk                (PWR_CR3_EWUP)                        /*!< Enable all external Wake-Up lines  */
+#define PWR_SCR_CSBF                    (PWR_EXTSCR_C1CSSF)                   /*!< Clear standby and stop flags for CPU1 */
+
+#endif
+
+
+/**
  * @addtogroup LIBOHIBOARD_Driver
  * @{
  */
 
-#if defined(LIBOHIBOARD_LOWPOWER) && defined (LIBOHIBOARD_STM32L4)
+#if defined(LIBOHIBOARD_LOWPOWER) && defined (LIBOHIBOARD_STM32L4) || defined (LIBOHIBOARD_STM32WB)
 
 /**
  * @addtogroup LOWPOWER
@@ -108,6 +127,7 @@ typedef struct _LowPower_ResetFlags
 {
 	uint32_t pwrWufi                     : 1;  // PWR_SR1_WUFI
 	uint32_t pwrStandby                  : 1;  // PWR_SR1_SBF
+	uint32_t pwrStandby_cpu2             : 1;  // PWR_SR1_SBF_CPU2
 
 	uint32_t rccLowPowerReset            : 1;  // RCC_CSR_LPWRRSTF
 	uint32_t rccWatchdogReset            : 1;  // RCC_CSR_WWDGRSTF
@@ -138,7 +158,7 @@ typedef union _LowPower_ResetControl
  * @}
  */
 
-#endif // LIBOHIBOARD_LOWPOWER & LIBOHIBOARD_STM32L4
+#endif // LIBOHIBOARD_LOWPOWER & LIBOHIBOARD_STM32L4 || LIBOHIBOARD_STM32WB
 
 /**
  * @}

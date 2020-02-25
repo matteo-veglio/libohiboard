@@ -58,7 +58,7 @@ extern "C" {
 #include "utility.h"
 #include "clock.h"
 
-#if (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4))
+#if (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4) || defined (LIBOHIBOARD_STM32WB))
 
 /**
  *
@@ -69,7 +69,7 @@ typedef enum _LowPower_WaitFor
 	LOWPOWER_WAITFOR_EVENT     = 2,
 } LowPower_WaitFor;
 
-#endif // (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4))
+#endif // (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4)) || defined (LIBOHIBOARD_STM32WB))
 
 /**
  *
@@ -89,11 +89,11 @@ typedef enum _LowPower_VoltageScaling
 	LOWPOWER_VOLTAGESCALING_SCALE2 = 2,
 } LowPower_VoltageScaling;
 
-#if defined (LIBOHIBOARD_STM32L4)
+#if (defined (LIBOHIBOARD_STM32L4) || defined (LIBOHIBOARD_STM32WB))
 
 #include "hardware/STM32L4/lowpower_STM32L4.h"
 
-#endif // LIBOHIBOARD_STM32L4
+#endif // LIBOHIBOARD_STM32L4 || LIBOHIBOARD_STM32WB
 
 #if defined (LIBOHIBOARD_PIC24FJ)
 
@@ -120,7 +120,7 @@ void LowPower_init(void);
  */
 LowPower_ResetControl LowPower_getResetStatus(void);
 
-#if (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4))
+#if (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4) || defined (LIBOHIBOARD_STM32WB))
 
 /**
  * Enable the WakeUp PINx functionality.
@@ -159,7 +159,7 @@ uint32_t LowPower_getWakeUpflags (void);
  */
 void LowPower_clearWakeUpflags (uint32_t flags);
 
-#endif // (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4))
+#endif // (defined (LIBOHIBOARD_STM32L0) || defined (LIBOHIBOARD_STM32L4)) || defined (LIBOHIBOARD_STM32WB))
 
 /**
  * Set the frequency of CPU and the low-power mode.

@@ -1746,7 +1746,7 @@ static uint32_t Clock_getActualSystemValue (void)
 
 void Clock_setClockAfterWake (Clock_SystemSource source)
 {
-    ohiassert((source != CLOCK_SYSTEMSOURCE_MSI) && (source != CLOCK_SYSTEMSOURCE_HSI));
+    ohiassert((source = CLOCK_SYSTEMSOURCE_MSI) && (source = CLOCK_SYSTEMSOURCE_HSI));
 
     switch (source)
     {

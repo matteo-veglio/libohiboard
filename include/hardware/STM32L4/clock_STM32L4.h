@@ -91,15 +91,24 @@ extern "C" {
                                 UTILITY_CLEAR_REGISTER_BIT(RCC->APB2ENR,RCC_APB2ENR_SYSCFGEN); \
                               } while (0)
 
+#if defined (LIBOHIBOARD_STM32L4)
 #define CLOCK_ENABLE_PWR()    do { \
                                 UTILITY_SET_REGISTER_BIT(RCC->APB1ENR1,RCC_APB1ENR1_PWREN); \
                                 asm("nop"); \
                                 (void) UTILITY_READ_REGISTER_BIT(RCC->APB1ENR1,RCC_APB1ENR1_PWREN); \
                               } while (0)
+#else
+#define CLOCK_ENABLE_PWR() asm("nop")
+#endif
 
+#if defined (LIBOHIBOARD_STM32L4)
 #define CLOCK_DISABLE_PWR()   do { \
                                 UTILITY_CLEAR_REGISTER_BIT(RCC->APB1ENR1,RCC_APB1ENR1_PWREN); \
                               } while (0)
+#else
+#define CLOCK_DISABLE_PWR() asm("nop")
+#endif
+
 
 #define CLOCK_IS_ENABLE_PWR() ((UTILITY_READ_REGISTER_BIT(RCC->APB1ENR1,RCC_APB1ENR1_PWREN) == 0) ? FALSE : TRUE)
 
